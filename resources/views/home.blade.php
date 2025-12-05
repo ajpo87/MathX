@@ -102,6 +102,16 @@
         </div>
 
     </form>
+    {{-- Validation Error --}}
+
+    @if ($errors->any())
+        <div class="container">
+            <div class="row">
+                <div class="altert alert-danger text-center mt-3"></div>
+                Preenhcer os campos deviamente
+            </div>
+        </div>
+    @endif
 
     <!-- footer -->
     <footer class="text-center mt-5">
