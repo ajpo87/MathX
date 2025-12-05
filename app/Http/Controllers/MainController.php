@@ -49,6 +49,74 @@ class MainController extends Controller
         //generate exercises
         $exercises = [];
         for($index = 1 ; $index <= $numberExercises; $index++) {
+            $exercises[] = $this->genExercise($index, $operations, $min, $max);
+
+        }
+
+        // place exercises in session
+        $request->session()->put('exercises', $exercises);
+        // ou
+        //session(['exercises' => $exercises]);
+
+
+        return view('operations', ['exercises' => $exercises]);
+    }
+
+    public function printExercises()
+    {
+        if(!session()->has('exercises')) {
+            return redirect()->route('home');
+        }
+        $exercises = session('exercises');
+
+        echo '<pre>';
+        echo '<h1>Exercicios de Matematica ('.env('APP_NAME').')</h1>';
+        echo '<hr>';
+        foreach($exercises as $exercise) {
+            echo '<h2> <small> '.str_pad($exercise['exercise_number'], 2, '0', STR_PAD_LEFT) .' -> </small> '.$exercise['exercise'].' </h2>';
+
+        }
+
+        echo '<hr>';
+        echo '<h3>Solucões</h3>';
+        foreach($exercises as $exercise) {
+            echo '<h4> <small> '.str_pad($exercise['exercise_number'], 2, '0', STR_PAD_LEFT) .' -> </small> '.$exercise['solution'].' </h4>';
+
+        }
+    }
+
+
+    public function exportExercises()
+    {
+        if(!session()->has('exercises')) {
+            return redirect()->route('home');
+        }
+        $exercises = session('exercises');
+
+        $filename = 'exercicios_matematica_'.date('Ymd_His').'.txt';
+        $file = fopen($filename, 'w');
+
+        fwrite($file, "Exercicios de Matematica (".env('APP_NAME').")\n");
+        fwrite($file, "=============================\n\n");
+
+        foreach($exercises as $exercise) {
+            fwrite($file, str_pad($exercise['exercise_number'], 2, '0', STR_PAD_LEFT) .' -> '.$exercise['exercise']."\n");
+        }
+
+        fwrite($file, "\n=============================\n");
+        fwrite($file, "Solucões\n\n");
+
+        foreach($exercises as $exercise) {
+            fwrite($file, str_pad($exercise['exercise_number'], 2, '0', STR_PAD_LEFT) .' -> '.$exercise['solution']."\n");
+        }
+
+        fclose($file);
+
+        return response()->download($filename)->deleteFileAfterSend(true);
+    }
+
+    private function genExercise($index, $operations, $min, $max): array
+    {
             $operation = $operations[array_rand(array_filter($operations))];
             $number1 = rand($min, $max);
             $number2 = rand($min, $max);
@@ -84,7 +152,7 @@ class MainController extends Controller
                 $solution = number_format($solution, 2);
             }
 
-            $exercises[] = [
+            return [
                 'operation' => $operation,
                 'exercise_number' => $index,
                 'exercise' => $exercise,
@@ -92,18 +160,5 @@ class MainController extends Controller
             ];
 
 
-        }
-
-        return view('operations', ['exercises' => $exercises]);
-    }
-
-    public function printExercises()
-    {
-        echo "imprimir exercicios";
-    }
-
-    public function exportExercises()
-    {
-        echo "exportat exercicios para .txt";
     }
 }
